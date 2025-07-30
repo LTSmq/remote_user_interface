@@ -2,58 +2,29 @@
 import socket
 import json
 
-BUFFER_SIZE = 2048
+BUFFER_SIZE = 4096
 
 
 class RemoteInterface:
-    _response: str
     def __init__(self, host: str, port: int):
+        # Connect to given host/port
         self._socket = socket.socket()
         self._socket.connect((host, port))
-        self._result = "..."
 
-    def get_last_result(self) -> str:
-        return self._result
+    def execute(self, command_name: str, **kwargs) -> dict:
+        # Load command into JSON format
+        command = json.dumps({"command": command_name, **kwargs})
 
-    def _intercom(self, message: str) -> str:
-        self._socket.send(message.encode())
-        return self._socket.recv(BUFFER_SIZE).decode()
+        # Dispatch command to server
+        self._socket.send(command.encode())
 
+        # Await response
+        response = self._socket.recv(BUFFER_SIZE)
 
-    def set_system_property(self, argument: str) -> bool:
-        response = self._intercom(f"setsysp {argument}")
-
-        return response.upper() == "OK"
-
-
-    def fetch(self, info_label: str = "*") -> dict:
-        info_string = self._intercom(f"fetch {info_label}")
-
-        if info_string.startswith("ERR"):
-            self._result = info_string
-            return {}
-
+        #Ensure response is valid dictionary JSON
         try:
-            info = json.loads(info_string)
-            self._result = json.dumps(info, indent=2)
-            return info
-        except json.decoder.JSONDecodeError:
-            self._result = info_string
-            return {}
+            return json.loads(response)
 
-
-    def set_target_position(self, position) -> bool:
-        try:
-            value = float(position)
-            value = max(0.0, min(1.0, value))
-
-            position_set = self.set_system_property(f"motor target_position {str(value)}")
-            if position_set:
-                self._result = f"Target position set to {value}"
-            else:
-                self._result = f"Controller refused to set motor target position to {value}"
-
-        except ValueError:
-            self._result = f"Invalid position: {position}"
-
+        except json.JSONDecodeError:
+            return { "decoding_error": True } # Dummy error dictionary
 

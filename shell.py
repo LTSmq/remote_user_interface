@@ -1,42 +1,68 @@
+import json
+
 from controller_simulation import ControllerSimulation
 from remote_interface import RemoteInterface
 
-HOST = "127.0.0.1"
-PORT = 55555
-WELCOME_MESSAGE = (
-    "Welcome to the program that can operate the bridge remotely"
-)
+# Load config
+with open("config.JSON") as config_json_file:
+    config = json.load(config_json_file)
 
-server_simulation = ControllerSimulation(HOST, PORT)
+if config["use_simulation"]:
+    # Set to simulation mode if specified by config
+    host = "127.0.0.1"
+    port = 55555
+    ControllerSimulation(host, port)
+else:
+    # Get port and host from user for production use
+    host = input("Enter host address: ")
+    port = input("Enter port: ")
 
-ri = RemoteInterface(HOST, PORT)
+# Create an interface instance
+ri = RemoteInterface(host, port)
 
-command_register = {
-    "fetch": ri.fetch,
-    "setsysp": ri.set_system_property,
-    "stp": ri.set_target_position,
-}
+# List available commands
+commands = [
+    {
+        "names": ["open", "open_bridge"],
+        "function": lambda: ri.execute("open_bridge"),
+    },
+    {
+        "names": ["close", "close_bridge"],
+        "function": lambda: ri.execute("close_bridge"),
+    },
+    {
+        "names": ["position", "set_position"],
+        "function": lambda position: ri.execute("set_position", position=position)
+    },
+    {
+        "names": ["bridge_state", "get_bridge_state", "gbs"],
+        "function": lambda: ri.execute("get_bridge_state"),
+    },
+]
 
-print(WELCOME_MESSAGE)
+# Enter command-line loop
 IN_LOOP = True
 while IN_LOOP:
-    instruction = input("> ")
+    # Get command input
+    command_line = input("> ")
 
-    instruction_parts = instruction.split(" ", 1)
-    command = instruction_parts[0].lower()
-    argument = instruction_parts[1] if len(instruction_parts) > 1 else ""
+    # Split by token (space delimited)
+    command_parts = command_line.split(" ")
 
-    if command == "quit":
-        break
+    # Assume the first token is the command name
+    command_name = command_parts[0]
 
-    if command not in command_register.keys():
-        print(f"Command not found: {command}")
-        continue
-
-    # This currently assumes the user is correctly formatting the input arguments
-    if argument == "":
-        command_register[command]()
+    # Find a match
+    for command in commands:
+        if command_name in command["names"]:
+            try:
+                # Execute match
+                print(command["function"](*command_parts[1:]))
+            except TypeError:
+                # Warn about invalid args
+                print("Invalid arguments for command")
+            break
     else:
-        command_register[command](argument)
+        # Warn about invalid command
+        print(f"Command not recognised: {command_name}")
 
-    print(ri.get_last_result())
