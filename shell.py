@@ -3,6 +3,8 @@ import json
 from controller_simulation import ControllerSimulation
 from remote_interface import RemoteInterface
 
+execution_valid = True
+
 # Load config
 with open("config.JSON") as config_json_file:
     config = json.load(config_json_file)
@@ -15,10 +17,7 @@ if config["use_simulation"]:
 else:
     # Get port and host from user for production use
     host = input("Enter host address: ")
-    port = input("Enter port: ")
-
-# Create an interface instance
-ri = RemoteInterface(host, port)
+    port = int(input("Enter port: "))
 
 # List available commands
 commands = [
@@ -40,9 +39,18 @@ commands = [
     },
 ]
 
+# Create an interface instance
+try:
+    ri = RemoteInterface(host, port)
+except TimeoutError:
+    print(f"Could not connect to {host}:{port}: Connection timeout")
+    execution_valid = False
+except ConnectionRefusedError:
+    print(f"Could not connect to {host}:{port}: Connection refused")
+    execution_valid = False
+
 # Enter command-line loop
-IN_LOOP = True
-while IN_LOOP:
+while execution_valid:
     # Get command input
     command_line = input("> ")
 
