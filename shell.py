@@ -4,6 +4,7 @@ from controller_simulation import ControllerSimulation
 from remote_interface import RemoteInterface
 
 execution_valid = True
+simulation = None
 
 # Load config
 with open("config.JSON") as config_json_file:
@@ -13,7 +14,7 @@ if config["use_simulation"]:
     # Set to simulation mode if specified by config
     host = "127.0.0.1"
     port = 55555
-    ControllerSimulation(host, port)
+    simulation = ControllerSimulation(host, port)
 else:
     # Get port and host from user for production use
     host = input("Enter host address: ")
@@ -60,6 +61,9 @@ while execution_valid:
     # Assume the first token is the command name
     command_name = command_parts[0]
 
+    if command_name == "quit":
+        break
+
     # Find a match
     for command in commands:
         if command_name in command["names"]:
@@ -74,3 +78,8 @@ while execution_valid:
         # Warn about invalid command
         print(f"Command not recognised: {command_name}")
 
+# Shut down the simulation if it has a simulation method (not NoneType)
+try:
+    simulation.shutdown()
+except AttributeError:
+    pass

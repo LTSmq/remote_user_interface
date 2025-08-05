@@ -25,9 +25,12 @@ class ControllerSimulation:
             self.get_bridge_state,
         ]
 
+    def shutdown(self) -> None:
+        self._connection.close()
+
     def _listen_procedure(self) -> None:
         self._socket.listen()
-        connection, _source_address = self._socket.accept()
+        self._connection, _source_address = self._socket.accept()
 
         command_registry = {}
         for method in self.get_commands():
@@ -35,23 +38,27 @@ class ControllerSimulation:
 
         receiving_messages = True
         while receiving_messages:
-            message = connection.recv(BUFFER_SIZE).decode()
             try:
-                command = json.loads(message)
-                command_name = command["command"]
-                if command_name in command_registry.keys():
-                    del command["command"]
-                    try:
-                        self.response = {"response": "OK"}
-                        command_registry[command_name](**command)
-                    except TypeError:
-                        self.response = {"response": "ERR", "error_message": f"Invalid arguments for command {command_name}"}
-                else:
-                    self.response = {"response": "ERR", "error_message": f"Command not found: {command_name}"}
-            except json.JSONDecodeError:
-                self.response = {"response": "ERR", "error_message": "Invalid command format"}
+                message = self._connection.recv(BUFFER_SIZE).decode()
+                try:
+                    command = json.loads(message)
+                    command_name = command["command"]
+                    if command_name in command_registry.keys():
+                        del command["command"]
+                        try:
+                            self.response = {"response": "OK"}
+                            command_registry[command_name](**command)
+                        except TypeError:
+                            self.response = {"response": "ERR", "error_message": f"Invalid arguments for command {command_name}"}
+                    else:
+                        self.response = {"response": "ERR", "error_message": f"Command not found: {command_name}"}
+                except json.JSONDecodeError:
+                    self.response = {"response": "ERR", "error_message": "Invalid command format"}
 
-            connection.send(json.dumps(self.response).encode())
+                self._connection.send(json.dumps(self.response).encode())
+            except ConnectionAbortedError:
+                # Logical flow on exception should be refactored
+                receiving_messages = False
 
     # Below are some example functionalities the controller might have
 
