@@ -15,21 +15,21 @@ There are currently 3 tiers of functionalities to implement, with most critical 
 and most superfluous last. 
 
 ### Priority 1
-[X] Provide socket connectivity between a remote controlling application and the bridge controller (Local Area Network)
-[X] Provide rudimentary user interface (command line)
-[] Allow users to view the status of the bridge; see if the bridge is set to open or close or in operation
-[] View the status of the operational subsystems (sensors, controls)
-[] Allow users to open or close the bridge
+- [X] Provide socket connectivity between a remote controlling application and the bridge controller (Local Area Network)
+- [X] Provide rudimentary user interface (command line)
+- [ ] Allow users to view the status of the bridge; see if the bridge is set to open or close or in operation
+- [ ] View the status of the operational subsystems (sensors, controls)
+- [ ] Allow users to open or close the bridge
 
 ### Priority 2
-[] Allow users to manually control subsystems, such as the motor or barricade systems
-[] Provide automatic warnings/reconfirmations/refusals for unsafe operations, such as opening bridge without barricading
-[] Provide an emergency shutdown procedure
+- [ ] Allow users to manually control subsystems, such as the motor or barricade systems
+- [ ] Provide automatic warnings/reconfirmations/refusals for unsafe operations, such as opening bridge without barricading
+- [ ] Provide an emergency shutdown procedure
 
 ### Priority 3
-[] Provide a graphical user interface (GUI), such as a desktop app or webpage
-[] Provide a login system to restrict access to only authorised users
-[] Secure communications between interface and controller, such as with end-to-end encryption or transport layer security
+- [ ] Provide a graphical user interface (GUI), such as a desktop app or webpage
+- [ ] Provide a login system to restrict access to only authorised users
+- [ ] Secure communications between interface and controller, such as with end-to-end encryption or transport layer security
 
 
 ## Controller Interfacing
