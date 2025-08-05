@@ -23,8 +23,16 @@ class RemoteInterface:
 
         #Ensure response is valid dictionary JSON
         try:
-            return json.loads(response)
+            json_response = json.loads(response)
+            if "response" not in json_response.keys():
+                json_response["response"] = "ERR"
+                json_response["error_message"] = ("Response type not provided by server; "
+                                                  "defaulted to error")
+            return json_response
 
         except json.JSONDecodeError:
-            return { "decoding_error": True } # Dummy error dictionary
-
+            return {
+                "response": "ERR",
+                "error_message": "Unable to decode server response in JSON format",
+                "source": response,
+            }
