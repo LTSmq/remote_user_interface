@@ -5,7 +5,7 @@
 
 #include <Arduino.h>
 
-#include "commander.cpp"
+#include "commander.h"
 
 
 Commander commander;
