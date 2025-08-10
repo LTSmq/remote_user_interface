@@ -11,7 +11,6 @@
 #include <WiFi.h>
 #include <cJSON.h>
 
-
 #define STANDARD_WAIT_TIME 100 // milliseconds
 #define PORT 55555
 #define MAX_CLIENTS 1
@@ -68,23 +67,14 @@ public:
     bool has_string_argument(const char* argument_name);
 
     // Returns the boolean value of the argument with the given name or the default value if the argument is not a valid bool
-    bool argument_value_bool(const char* argument_name, bool default_value);
-
-    // Returns the boolean value of the argument with the given name or false if the argument is not a valid bool
-    bool argument_value_bool(const char* argument_name);
+    bool argument_value_bool(const char* argument_name, bool default_value = false);
 
     // Returns the number (double) value of the argument with the given name or the default value if the argument is not a valid number
-    double argument_value_number(const char* argument_name, double default_value);
-
-    // Returns the number (double) value of the argument with the given name or 0.0 if the argument is not a valid number
-    double argument_value_number(const char* argument_name);
+    double argument_value_number(const char* argument_name, double default_value = 0.0);
 
     // Returns the String value of the argument with the given name or the default value if the argument is not a valid String
-    String argument_value_string(const char* argument_name, const char* default_value);
-
-    // Returns the String value of the argument with the given name or an empty String if the argument is not a valid String
-    String argument_value_string(const char* argument_name);
-
+    String argument_value_string(const char* argument_name, const char* default_value = "");
+    
 private:
     // Internally used JSON data structure
     cJSON* json_object;

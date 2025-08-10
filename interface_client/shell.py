@@ -1,85 +1,78 @@
 import json
 
-from controller_simulation import ControllerSimulation
 from remote_interface import RemoteInterface
 
-execution_valid = True
-simulation = None
+host = "192.168.4.1"  # ESP32 default WiFi server host
+port = 55555  # I have selected 55555 because it is easy to remember
 
-# Load config
-with open("config.JSON") as config_json_file:
-    config = json.load(config_json_file)
+ri = RemoteInterface(host, port)
 
-if config["use_simulation"]:
-    # Set to simulation mode if specified by config
-    host = "127.0.0.1"
-    port = 55555
-    simulation = ControllerSimulation(host, port)
-else:
-    # Get port and host from user for production use
-    host = input("Enter host address: ")
-    port = int(input("Enter port: "))
+recognised_commands: dict[str, dict[str, type]] = {
+    "ping": {},
+    "simulate_error": {},
+    "sum": {"a": float, "b": float},
+    "set_pin_output": {"pin_number": int, "high": bool},
+}
 
-# List available commands
-commands = [
-    {
-        "names": ["open", "open_bridge"],
-        "function": lambda: ri.execute("open_bridge"),
-    },
-    {
-        "names": ["close", "close_bridge"],
-        "function": lambda: ri.execute("close_bridge"),
-    },
-    {
-        "names": ["position", "set_position"],
-        "function": lambda position: ri.execute("set_position", position=position)
-    },
-    {
-        "names": ["bridge_state", "get_bridge_state", "gbs"],
-        "function": lambda: ri.execute("get_bridge_state"),
-    },
-]
 
-# Create an interface instance
-try:
-    ri = RemoteInterface(host, port)
-except TimeoutError:
-    print(f"Could not connect to {host}:{port}: Connection timeout")
-    execution_valid = False
-except ConnectionRefusedError:
-    print(f"Could not connect to {host}:{port}: Connection refused")
-    execution_valid = False
+def preparse_args(arguments: list[str]) -> list:
+    preparsed_arguments = []
 
-# Enter command-line loop
-while execution_valid:
-    # Get command input
-    command_line = input("> ")
+    semantically_true = ["true", "t", "yes", "y", "high", "h"]
+    semantically_false = ["false", "f", "no", "n", "low", "l"]
 
-    # Split by token (space delimited)
-    command_parts = command_line.split(" ")
+    for argument in arguments:
+        if argument.lower() in semantically_true:
+            preparsed_arguments.append(True)
+        elif argument.lower() in semantically_false:
+            preparsed_arguments.append(False)
+        else:
+            try:
+                preparsed_arguments.append(float(argument))
+            except ValueError:
+                preparsed_arguments.append(argument)
+    
+    return preparsed_arguments
 
-    # Assume the first token is the command name
-    command_name = command_parts[0]
+
+IN_LOOP = True
+while IN_LOOP:
+    command_string = input("> ")
+    tokens = command_string.split(" ")
+
+    command_name = tokens[0]
 
     if command_name == "quit":
+        ri.quit()
         break
+        
+    if command_name not in recognised_commands:
+        print(f"Unrecognised command: {command_name}")
+        continue
+    
+    provided_arguments = tokens[1:]
+    provided_arguments = preparse_args(provided_arguments)
+    provided_argument_count = len(provided_arguments)
 
-    # Find a match
-    for command in commands:
-        if command_name in command["names"]:
-            try:
-                # Execute match
-                print(command["function"](*command_parts[1:]))
-            except TypeError:
-                # Warn about invalid args
-                print("Invalid arguments for command")
+    required_arguments = recognised_commands[command_name]
+    required_argument_count = len(required_arguments)
+
+    if provided_argument_count < required_argument_count:
+        print(f"'{command_name}' requires {required_argument_count} argument(s) but only {provided_argument_count} provided")
+        continue
+    
+    kwargs = {}
+    invalid_arguments = False
+
+    for argument_name, provided_value, expected_type in zip(required_arguments.keys(), provided_arguments, required_arguments.values()):
+        if provided_value is not expected_type:
+            invalid_arguments = True
             break
-    else:
-        # Warn about invalid command
-        print(f"Command not recognised: {command_name}")
+        
+        kwargs[argument_name] = provided_arguments
+    
+    if invalid_arguments:
+        continue
+    
+    ri.execute(command_name, **kwargs)
 
-# Shut down the simulation if it has a simulation method (not NoneType)
-try:
-    simulation.shutdown()
-except AttributeError:
-    pass

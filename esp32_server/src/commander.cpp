@@ -1,21 +1,11 @@
 /**
  * commander.cpp
  * For functionality description see commander.h
- * 
 */
+#include "commander.h"
 
 #include <cJSON.h>  // ESP32-IDF component
 #include <WiFi.h>  // Arduino module
-
-#include "commander.h"
-
-#define STANDARD_WAIT_TIME 100 // miliseconds
-
-#define PORT 55555
-#define MAX_CLIENTS 1
-#define DEFAULT_SSID "Bridge Controller 26"
-#define DEFAULT_PASSWORD "password"
-#define MESSAGE_DELIMITER '\n'
 
 
 ArgType cJSON_IdentifyArgType(cJSON *json_object, const char* key) {
@@ -32,6 +22,7 @@ ArgType cJSON_IdentifyArgType(cJSON *json_object, const char* key) {
     return ArgType::INVALID;
 }
 
+
 void cJSON_AddOrReplaceItem(cJSON *json_object, const char* key, cJSON* item) {
     if (cJSON_HasObjectItem(json_object, key)) {
         cJSON_ReplaceItemInObject(json_object, key, item);
@@ -39,6 +30,7 @@ void cJSON_AddOrReplaceItem(cJSON *json_object, const char* key, cJSON* item) {
         cJSON_AddItemToObject(json_object, key, item);
     }
 }
+
 
 bool bool_from(cJSON* json_object, const char* key, bool default_value) {
     bool value = default_value;
@@ -53,6 +45,7 @@ bool bool_from(cJSON* json_object, const char* key, bool default_value) {
     return value;
 }
 
+
 String string_from(cJSON* json_object, const char* key, const char* default_value) {
     String value = String(default_value);
 
@@ -66,6 +59,7 @@ String string_from(cJSON* json_object, const char* key, const char* default_valu
     return value;
 }
 
+
 double number_from(cJSON* json_object, const char* key, double default_value) {
     double value = default_value;
     
@@ -78,6 +72,7 @@ double number_from(cJSON* json_object, const char* key, double default_value) {
 
     return value;
 }
+
 
 Command::Command(const char* from_json_string) {
     if (from_json_string) {
@@ -128,24 +123,12 @@ bool Command::argument_value_bool(const char* argument_name, bool default_value)
     return bool_from(kwargs(), argument_name, default_value);
 }
 
-bool Command::argument_value_bool(const char* argument_name) {
-    return argument_value_bool(argument_name, false);
-}
-
 double Command::argument_value_number(const char* argument_name, double default_value) {
     return number_from(kwargs(), argument_name, default_value);
 }
 
-double Command::argument_value_number(const char* argument_name) {
-    return argument_value_number(argument_name, 0.0);
-}
-
 String Command::argument_value_string(const char* argument_name, const char* default_value) {
     return string_from(kwargs(), argument_name, default_value);
-}
-
-String Command::argument_value_string(const char* argument_name) {
-    return argument_value_string(argument_name, "");
 }
 
 cJSON* Command::kwargs() {
@@ -269,10 +252,6 @@ void Commander::setup(const char* ssid, const char* password) {
 
     // Mark setup flag as true
     is_setup = true;
-}
-
-void Commander::setup() {
-    setup(DEFAULT_SSID, DEFAULT_PASSWORD);
 }
 
 void Commander::shutdown() {

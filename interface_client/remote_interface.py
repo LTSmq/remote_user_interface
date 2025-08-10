@@ -36,3 +36,6 @@ class RemoteInterface:
                 "error_message": "Unable to decode server response in JSON format",
                 "source": response,
             }
+
+    def quit(self):
+        self._socket.disconnect()
