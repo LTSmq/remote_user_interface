@@ -8,6 +8,8 @@
 #include <Arduino.h>
 
 #define SERIAL_BAUD 115200
+#include "commander.h"
+
 
 Commander commander;
 
