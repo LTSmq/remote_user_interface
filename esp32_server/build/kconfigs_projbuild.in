@@ -4,4 +4,4 @@ source "C:/Users/lachl/esp/esp-idf-v5.5/components/esp_app_format/Kconfig.projbu
 source "C:/Users/lachl/esp/esp-idf-v5.5/components/esp_rom/Kconfig.projbuild"
 source "C:/Users/lachl/esp/esp-idf-v5.5/components/esptool_py/Kconfig.projbuild"
 source "C:/Users/lachl/esp/esp-idf-v5.5/components/partition_table/Kconfig.projbuild"
-source "C:/Users/lachl/bridge-controller/managed_components/espressif__esp_rainmaker/Kconfig.projbuild"
+source "C:/Users/lachl/PycharmProjects/remote_user_interface/esp32_server/managed_components/espressif__esp_rainmaker/Kconfig.projbuild"

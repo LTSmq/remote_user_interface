@@ -1,8 +1,8 @@
-# Install script for directory: C:/Users/lachl/bridge-controller/main
+# Install script for directory: C:/Users/lachl/PycharmProjects/remote_user_interface/esp32_server/main
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
-  set(CMAKE_INSTALL_PREFIX "C:/Program Files (x86)/bridge-controller")
+  set(CMAKE_INSTALL_PREFIX "C:/Program Files (x86)/esp32_server")
 endif()
 string(REGEX REPLACE "/$" "" CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
 

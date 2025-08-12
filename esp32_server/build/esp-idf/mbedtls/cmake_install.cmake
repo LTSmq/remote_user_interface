@@ -2,7 +2,7 @@
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
-  set(CMAKE_INSTALL_PREFIX "C:/Program Files (x86)/bridge-controller")
+  set(CMAKE_INSTALL_PREFIX "C:/Program Files (x86)/esp32_server")
 endif()
 string(REGEX REPLACE "/$" "" CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
 
@@ -39,6 +39,6 @@ endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/Users/lachl/bridge-controller/build/esp-idf/mbedtls/mbedtls/cmake_install.cmake")
+  include("C:/Users/lachl/PycharmProjects/remote_user_interface/esp32_server/build/esp-idf/mbedtls/mbedtls/cmake_install.cmake")
 endif()
 

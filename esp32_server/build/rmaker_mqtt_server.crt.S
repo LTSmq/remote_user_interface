@@ -1,4 +1,4 @@
-/* * Data converted from C:/Users/lachl/bridge-controller/managed_components/espressif__esp_rainmaker/server_certs/rmaker_mqtt_server.crt
+/* * Data converted from C:/Users/lachl/PycharmProjects/remote_user_interface/esp32_server/managed_components/espressif__esp_rainmaker/server_certs/rmaker_mqtt_server.crt
  * (null byte appended)
  */
 .data

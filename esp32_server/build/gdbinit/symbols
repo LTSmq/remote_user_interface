@@ -18,8 +18,8 @@ end
 
 # Load bootloader symbols
 set confirm off
-    add-symbol-file C:/Users/lachl/bridge-controller/build/bootloader/bootloader.elf
+    add-symbol-file C:/Users/lachl/PycharmProjects/remote_user_interface/esp32_server/build/bootloader/bootloader.elf
 set confirm on
 
 # Load application symbols
-file C:/Users/lachl/bridge-controller/build/bridge-controller.elf
+file C:/Users/lachl/PycharmProjects/remote_user_interface/esp32_server/build/esp32_server.elf

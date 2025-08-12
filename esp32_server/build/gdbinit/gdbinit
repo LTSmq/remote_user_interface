@@ -1,2 +1,2 @@
-source C:/Users/lachl/bridge-controller/build/gdbinit/symbols
-source C:/Users/lachl/bridge-controller/build/gdbinit/connect
+source C:/Users/lachl/PycharmProjects/remote_user_interface/esp32_server/build/gdbinit/symbols
+source C:/Users/lachl/PycharmProjects/remote_user_interface/esp32_server/build/gdbinit/connect

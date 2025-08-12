@@ -1488,7 +1488,7 @@ rule C_STATIC_LIBRARY_LINKER____idf_joltwallet__littlefs_
 # Rule for re-running cmake.
 
 rule RERUN_CMAKE
-  command = C:\Users\lachl\.espressif\tools\cmake\3.30.2\bin\cmake.exe --regenerate-during-build -SC:\Users\lachl\esp\esp-idf-v5.5\components\bootloader\subproject -BC:\Users\lachl\bridge-controller\build\bootloader
+  command = C:\Users\lachl\.espressif\tools\cmake\3.30.2\bin\cmake.exe --regenerate-during-build -SC:\Users\lachl\esp\esp-idf-v5.5\components\bootloader\subproject -BC:\Users\lachl\PycharmProjects\remote_user_interface\esp32_server\build\bootloader
   description = Re-running CMake...
   generator = 1
 

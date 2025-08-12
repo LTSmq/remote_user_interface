@@ -1,0 +1,3 @@
+Command: cmake -G Ninja -DPYTHON_DEPS_CHECKED=1 -DPYTHON=C:\Users\lachl\.espressif\python_env\idf5.5_py3.11_env\Scripts\python.exe -DESP_PLATFORM=1 -DCCACHE_ENABLE=1 C:\Users\lachl\PycharmProjects\remote_user_interface\esp32_server
+ESP Insights Project commit: 8c12eeb-dirty
+ESP RainMaker Project commit: 8c12eeb-dirty

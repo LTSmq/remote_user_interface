@@ -1,13 +1,13 @@
 # Target labels
  bootloader
 # Source files and their labels
-C:/Users/lachl/bridge-controller/build/CMakeFiles/bootloader
-C:/Users/lachl/bridge-controller/build/CMakeFiles/bootloader.rule
-C:/Users/lachl/bridge-controller/build/CMakeFiles/bootloader-complete.rule
-C:/Users/lachl/bridge-controller/build/bootloader-prefix/src/bootloader-stamp/bootloader-build.rule
-C:/Users/lachl/bridge-controller/build/bootloader-prefix/src/bootloader-stamp/bootloader-configure.rule
-C:/Users/lachl/bridge-controller/build/bootloader-prefix/src/bootloader-stamp/bootloader-download.rule
-C:/Users/lachl/bridge-controller/build/bootloader-prefix/src/bootloader-stamp/bootloader-install.rule
-C:/Users/lachl/bridge-controller/build/bootloader-prefix/src/bootloader-stamp/bootloader-mkdir.rule
-C:/Users/lachl/bridge-controller/build/bootloader-prefix/src/bootloader-stamp/bootloader-patch.rule
-C:/Users/lachl/bridge-controller/build/bootloader-prefix/src/bootloader-stamp/bootloader-update.rule
+C:/Users/lachl/PycharmProjects/remote_user_interface/esp32_server/build/CMakeFiles/bootloader
+C:/Users/lachl/PycharmProjects/remote_user_interface/esp32_server/build/CMakeFiles/bootloader.rule
+C:/Users/lachl/PycharmProjects/remote_user_interface/esp32_server/build/CMakeFiles/bootloader-complete.rule
+C:/Users/lachl/PycharmProjects/remote_user_interface/esp32_server/build/bootloader-prefix/src/bootloader-stamp/bootloader-build.rule
+C:/Users/lachl/PycharmProjects/remote_user_interface/esp32_server/build/bootloader-prefix/src/bootloader-stamp/bootloader-configure.rule
+C:/Users/lachl/PycharmProjects/remote_user_interface/esp32_server/build/bootloader-prefix/src/bootloader-stamp/bootloader-download.rule
+C:/Users/lachl/PycharmProjects/remote_user_interface/esp32_server/build/bootloader-prefix/src/bootloader-stamp/bootloader-install.rule
+C:/Users/lachl/PycharmProjects/remote_user_interface/esp32_server/build/bootloader-prefix/src/bootloader-stamp/bootloader-mkdir.rule
+C:/Users/lachl/PycharmProjects/remote_user_interface/esp32_server/build/bootloader-prefix/src/bootloader-stamp/bootloader-patch.rule
+C:/Users/lachl/PycharmProjects/remote_user_interface/esp32_server/build/bootloader-prefix/src/bootloader-stamp/bootloader-update.rule

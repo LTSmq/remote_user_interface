@@ -10,18 +10,18 @@ if(NOT EXISTS "C:/Users/lachl/esp/esp-idf-v5.5/components/bootloader/subproject"
   file(MAKE_DIRECTORY "C:/Users/lachl/esp/esp-idf-v5.5/components/bootloader/subproject")
 endif()
 file(MAKE_DIRECTORY
-  "C:/Users/lachl/bridge-controller/build/bootloader"
-  "C:/Users/lachl/bridge-controller/build/bootloader-prefix"
-  "C:/Users/lachl/bridge-controller/build/bootloader-prefix/tmp"
-  "C:/Users/lachl/bridge-controller/build/bootloader-prefix/src/bootloader-stamp"
-  "C:/Users/lachl/bridge-controller/build/bootloader-prefix/src"
-  "C:/Users/lachl/bridge-controller/build/bootloader-prefix/src/bootloader-stamp"
+  "C:/Users/lachl/PycharmProjects/remote_user_interface/esp32_server/build/bootloader"
+  "C:/Users/lachl/PycharmProjects/remote_user_interface/esp32_server/build/bootloader-prefix"
+  "C:/Users/lachl/PycharmProjects/remote_user_interface/esp32_server/build/bootloader-prefix/tmp"
+  "C:/Users/lachl/PycharmProjects/remote_user_interface/esp32_server/build/bootloader-prefix/src/bootloader-stamp"
+  "C:/Users/lachl/PycharmProjects/remote_user_interface/esp32_server/build/bootloader-prefix/src"
+  "C:/Users/lachl/PycharmProjects/remote_user_interface/esp32_server/build/bootloader-prefix/src/bootloader-stamp"
 )
 
 set(configSubDirs )
 foreach(subDir IN LISTS configSubDirs)
-    file(MAKE_DIRECTORY "C:/Users/lachl/bridge-controller/build/bootloader-prefix/src/bootloader-stamp/${subDir}")
+    file(MAKE_DIRECTORY "C:/Users/lachl/PycharmProjects/remote_user_interface/esp32_server/build/bootloader-prefix/src/bootloader-stamp/${subDir}")
 endforeach()
 if(cfgdir)
-  file(MAKE_DIRECTORY "C:/Users/lachl/bridge-controller/build/bootloader-prefix/src/bootloader-stamp${cfgdir}") # cfgdir has leading slash
+  file(MAKE_DIRECTORY "C:/Users/lachl/PycharmProjects/remote_user_interface/esp32_server/build/bootloader-prefix/src/bootloader-stamp${cfgdir}") # cfgdir has leading slash
 endif()

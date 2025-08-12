@@ -22,4 +22,4 @@ set confirm off
 set confirm on
 
 # Load application symbols
-file C:/Users/lachl/bridge-controller/build/bootloader/bootloader.elf
+file C:/Users/lachl/PycharmProjects/remote_user_interface/esp32_server/build/bootloader/bootloader.elf
