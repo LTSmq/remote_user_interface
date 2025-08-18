@@ -1,7 +1,0 @@
-Command: cmake -G Ninja -DPYTHON_DEPS_CHECKED=1 -DPYTHON=C:\Users\lachl\.espressif\python_env\idf5.5_py3.11_env\Scripts\python.exe -DESP_PLATFORM=1 -DCCACHE_ENABLE=1 C:\Users\lachl\PycharmProjects\remote_user_interface\esp32_server
-ESP Insights Project commit: 8c12eeb-dirty
-ESP RainMaker Project commit: 8c12eeb-dirty
-CMake Error at C:/Users/lachl/esp/esp-idf-v5.5/components/arduino-esp32-master/CMakeLists.txt:384 (message):
-  esp32-arduino requires CONFIG_FREERTOS_HZ=1000 (currently 100)
-
-
