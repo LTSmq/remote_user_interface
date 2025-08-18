@@ -6,14 +6,19 @@ BUFFER_SIZE = 4096
 
 
 class RemoteInterface:
-    def __init__(self, host: str, port: int):
+    def __init__(self, host: str, port: int, dummy: bool = False):
         # Connect to given host/port
-        self._socket = socket.socket()
-        self._socket.connect((host, port))
+        self._dummy = dummy
+        if not dummy:
+            self._socket = socket.socket()
+            self._socket.connect((host, port))
 
     def execute(self, command_name: str, **kwargs) -> dict:
+        if self._dummy:
+            return { "response": "OK" }
+        
         # Load command into JSON format
-        command = json.dumps({"command": command_name, **kwargs})
+        command = json.dumps({"command": command_name, "kwargs": {**kwargs}})
 
         # Dispatch command to server
         self._socket.send(command.encode())

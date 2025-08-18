@@ -1,78 +1,94 @@
-import json
+# shell.py
+# A rudimentary user interface for the remote interface
+# Users provide a method name and keyword arguments in Python syntax
+
+from shlex import split as tokenize 
 
 from remote_interface import RemoteInterface
 
 host = "192.168.4.1"  # ESP32 default WiFi server host
 port = 55555  # I have selected 55555 because it is easy to remember
 
-ri = RemoteInterface(host, port)
-
-recognised_commands: dict[str, dict[str, type]] = {
-    "ping": {},
-    "simulate_error": {},
-    "sum": {"a": float, "b": float},
-    "set_pin_output": {"pin_number": int, "high": bool},
-}
+ri = RemoteInterface(host, port, dummy=True)
 
 
-def preparse_args(arguments: list[str]) -> list:
-    preparsed_arguments = []
+def parse_input(user_input: str):
+    spaced_signs = [" =", "= ", "  "]
+    for spaced_sign in spaced_signs:
+        while spaced_sign in user_input:
+            user_input = user_input.replace(spaced_sign, spaced_sign.replace(" ", ""))
 
-    semantically_true = ["true", "t", "yes", "y", "high", "h"]
-    semantically_false = ["false", "f", "no", "n", "low", "l"]
+    tokens = tokenize(user_input)
+    if not tokens:
+        return None, {}
 
-    for argument in arguments:
-        if argument.lower() in semantically_true:
-            preparsed_arguments.append(True)
-        elif argument.lower() in semantically_false:
-            preparsed_arguments.append(False)
-        else:
-            try:
-                preparsed_arguments.append(float(argument))
-            except ValueError:
-                preparsed_arguments.append(argument)
-    
-    return preparsed_arguments
-
-
-IN_LOOP = True
-while IN_LOOP:
-    command_string = input("> ")
-    tokens = command_string.split(" ")
-
-    command_name = tokens[0]
-
-    if command_name == "quit":
-        ri.quit()
-        break
-        
-    if command_name not in recognised_commands:
-        print(f"Unrecognised command: {command_name}")
-        continue
-    
-    provided_arguments = tokens[1:]
-    provided_arguments = preparse_args(provided_arguments)
-    provided_argument_count = len(provided_arguments)
-
-    required_arguments = recognised_commands[command_name]
-    required_argument_count = len(required_arguments)
-
-    if provided_argument_count < required_argument_count:
-        print(f"'{command_name}' requires {required_argument_count} argument(s) but only {provided_argument_count} provided")
-        continue
-    
+    command = tokens[0]
     kwargs = {}
-    invalid_arguments = False
 
-    for argument_name, provided_value, expected_type in zip(required_arguments.keys(), provided_arguments, required_arguments.values()):
-        if provided_value is not expected_type:
-            invalid_arguments = True
-            break
+    for token in tokens[1:]:
+        if '=' in token:
+            key, value = token.split('=', 1)
+            if value.lower() == "true":
+                value = True
+            elif value.lower() == "false":
+                value = False
+            elif value.isdigit():
+                value = int(value)
+            else:
+                try:
+                    value = float(value)
+                except ValueError:
+                    pass
+            kwargs[key] = value
+        else:
+            print(f"Warning: ignoring invalid token '{token}' (no '=')")
+    
+    return command, kwargs
+
+
+def print_payload(payload: dict):
+    minimum_margin = 8
+
+    keys = []
+    values = []
+
+    longest_key_length = 0
+
+    for key, value in payload.items():
+        key_str = str(key)
+        value_str = str(value)
+
+        if len(key_str) > longest_key_length:
+            longest_key_length = len(key_str)
+    
+        keys.append(key_str)
+        values.append(value_str)
+    
+    for key, value in zip(keys, values):
+        info_string = key + " "
+        info_string += "-" * longest_key_length - len(key)
+
+        info_string + "-" * minimum_margin
         
-        kwargs[argument_name] = provided_arguments
+        info_string += "> " + value
+        print(info_string)    
+
+
+while True:
+    user_input = input("> ")
+    command_name, kwargs = parse_input(user_input)
+
+    if command_name.lower() in ["quit", "exit", "logout"]:
+        break
     
-    if invalid_arguments:
+    response = ri.execute(command_name.lower(), **kwargs)
+    if not "response" in response.keys(): 
         continue
+
+    response_type = response["response"]
+    if response_type == "ERR":
+        print(f"Error: {response["error_message"]}")
     
-    ri.execute(command_name, **kwargs)
+    elif response_type == "DATA":
+        print_payload(response["payload"])
 
