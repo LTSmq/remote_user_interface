@@ -1,8 +1,6 @@
 /*
  * commander_example_sketch.ino
 */
-#include <string>
-
 #include "commander.h"
 
 #define REFRESH_TIME 2000
@@ -32,6 +30,7 @@ void loop() {
 void handle_command(Command command) {
   String command_name = String(command.name());
   if (command_name.equals("ping")) {
+    Serial.println("Responding to ping with acknowledgement");
     commander.reply_OK();
     return;
   }
@@ -40,18 +39,15 @@ void handle_command(Command command) {
     int a = command.argument_value<int>("a", 0);
     int b = command.argument_value<int>("b", 0);
     int result = a + b;
-
-    Serial.print("Has integer argument a: \t");
-    Serial.println(command.has_argument<int>("a"));
-
-    Serial.print("Result:\t");
-    Serial.println(result);
-
+    
     DataPayload sum_return;
     sum_return.add_value<int>("result", a + b);
     commander.reply_DATA(sum_return);
+    Serial.print("Responding to sum with result: ");
+    Serial.println(result);
     return;
   }
 
+  Serial.println("Responding to unknown command with error");
   commander.reply_ERR("Unrecognised command");
 }
