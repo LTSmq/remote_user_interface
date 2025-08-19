@@ -42,14 +42,14 @@ public:
   // Returns true if the command has an argument of given name and type, false otherwise
   template<typename ArgumentType>
   bool has_argument(const char* argument_name) {
-    return json_object[argument_name].is<ArgumentType>();
+    return json_object["kwargs"][argument_name].is<ArgumentType>();
   }
 
   // Returns the value of the argument with the given name and type if it is valid, returns the given default value otherwise
   template<typename ArgumentType>
   ArgumentType argument_value(const char* argument_name, ArgumentType default_value) {
     if (Command::has_argument<ArgumentType>(argument_name)) {
-      return json_object[argument_name].as<ArgumentType>();
+      return json_object["kwargs"][argument_name].as<ArgumentType>();
     }
 
     return default_value;

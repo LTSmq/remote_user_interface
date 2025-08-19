@@ -10,23 +10,22 @@ Command::Command() {
 }
 
 Command::Command(const char* json_string) {
-  ArduinoJson::DeserializationError error = deserializeJson(Command::json_object, json_string);
+  ArduinoJson::DeserializationError error = deserializeJson(json_object, json_string);
   Serial.println(json_string);
   if (error) {
-    Command::json_object.clear();
+    json_object.clear();
   }
 }
 
 bool Command::valid() {
   const char* this_name = Command::name();
-  //Serial.println(this_name);
   return !String(this_name).equals("");
 }
 
 
 const char* Command::name() {
   
-  return Command::json_object["command"].as<const char*>();
+  return json_object["command"].as<const char*>();
 }
 
 
@@ -41,8 +40,8 @@ String DataPayload::as_json_string() {
 }
 
 void DataPayload::add_payload(const char* label, DataPayload payload) {
-  ArduinoJson::JsonObject nested_object = DataPayload::json_object.createNestedObject(label);
-  ArduinoJson::JsonObject nested_data = payload.json_object.as<JsonObject>();
+  JsonObject nested_object = json_object.createNestedObject(label);
+  nested_object.set(payload.json_object.as<JsonObject>());
 }
 
 
@@ -76,7 +75,6 @@ Command Commander::get_next_command() {
     }
 
     client = new_client;
-    Serial.println("A client has connected...");
   }
 
   if (!Commander::client.available()) {
@@ -90,26 +88,23 @@ Command Commander::get_next_command() {
 }
 
 bool Commander::reply_OK() {
-  /*
   DataPayload message_payload;
   message_payload.add_value<const char*>("response", "OK");
-  Commander::reply(message_payload);
-  */
-  client.write("{\"response\": \"OK\"}");
+  return Commander::reply(message_payload);
 }
 
 bool Commander::reply_ERR(const char* error_message) {
   DataPayload message_payload;
   message_payload.add_value<const char*>("response", "ERR");
   message_payload.add_value<const char*>("error_message", error_message);
-  Commander::reply(message_payload);
+  return Commander::reply(message_payload);
 }
 
 bool Commander::reply_DATA(DataPayload data_payload) {
   DataPayload message_payload;
   message_payload.add_value<const char*>("response", "DATA");
   message_payload.add_payload("payload", data_payload);
-  Commander::reply(message_payload);
+  return Commander::reply(message_payload);
 }
 
 bool Commander::reply(DataPayload message_payload) {

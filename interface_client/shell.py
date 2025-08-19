@@ -66,9 +66,9 @@ def print_payload(payload: dict):
     
     for key, value in zip(keys, values):
         info_string = key + " "
-        info_string += "-" * longest_key_length - len(key)
+        info_string += "-" * (longest_key_length - len(key))
 
-        info_string + "-" * minimum_margin
+        info_string += "-" * minimum_margin
         
         info_string += "> " + value
         print(info_string)    
@@ -82,7 +82,6 @@ while True:
         break
     
     response = ri.execute(command_name.lower(), **kwargs)
-    print(response)
     if not "response" in response.keys(): 
         continue
 
