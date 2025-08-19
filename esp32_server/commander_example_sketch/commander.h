@@ -70,7 +70,7 @@ public:
   DataPayload();
 
   // Returns a JSON string corresponding to the values in the payload
-  const char* as_json_string();
+  String as_json_string();
 
   template<typename DataType>
   void add_value(const char* label, DataType value) {
