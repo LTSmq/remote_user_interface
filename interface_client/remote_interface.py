@@ -18,7 +18,7 @@ class RemoteInterface:
             return { "response": "OK" }
         
         # Load command into JSON format
-        command = json.dumps({"command": command_name, "kwargs": {**kwargs}})
+        command = json.dumps({"command": command_name, "kwargs": {**kwargs}}) + "\n"
 
         # Dispatch command to server
         self._socket.send(command.encode())

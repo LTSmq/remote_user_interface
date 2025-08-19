@@ -9,7 +9,7 @@ from remote_interface import RemoteInterface
 host = "192.168.4.1"  # ESP32 default WiFi server host
 port = 55555  # I have selected 55555 because it is easy to remember
 
-ri = RemoteInterface(host, port, dummy=True)
+ri = RemoteInterface(host, port)
 
 
 def parse_input(user_input: str):
@@ -82,6 +82,7 @@ while True:
         break
     
     response = ri.execute(command_name.lower(), **kwargs)
+    print(response)
     if not "response" in response.keys(): 
         continue
 
