@@ -6,7 +6,7 @@ BUFFER_SIZE = 4096
 
 
 class RemoteInterface:
-    def __init__(self, host: str, port: int, dummy: bool = False):
+    def __init__(self, host: str = "192.168.4.1", port: int = 55555, dummy: bool = False):
         # Connect to given host/port
         self._dummy = dummy
         if not dummy:
