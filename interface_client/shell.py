@@ -74,21 +74,22 @@ def print_payload(payload: dict):
         print(info_string)    
 
 
-while True:
-    user_input = input("> ")
-    command_name, kwargs = parse_input(user_input)
+if __name__ == "__main__":
+    while True:
+        user_input = input("> ")
+        command_name, kwargs = parse_input(user_input)
 
-    if command_name.lower() in ["quit", "exit", "logout"]:
-        break
-    
-    response = ri.execute(command_name.lower(), **kwargs)
-    if not "response" in response.keys(): 
-        continue
+        if command_name.lower() in ["quit", "exit", "logout"]:
+            break
 
-    response_type = response["response"]
-    if response_type == "ERR":
-        print(f"Error: {response["error_message"]}")
-    
-    elif response_type == "DATA":
-        print_payload(response["payload"])
+        response = ri.execute(command_name.lower(), **kwargs)
+        if not "response" in response.keys():
+            continue
+
+        response_type = response["response"]
+        if response_type == "ERR":
+            print(f"Error: {response["error_message"]}")
+
+        elif response_type == "DATA":
+            print_payload(response["payload"])
 

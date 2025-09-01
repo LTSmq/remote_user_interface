@@ -6,16 +6,16 @@ BUFFER_SIZE = 4096
 
 
 class RemoteInterface:
-    def __init__(self, host: str = "192.168.4.1", port: int = 55555, dummy: bool = False):
+    def __init__(self, host: str = "192.168.4.1", port: int = 55555, simulation: bool = False):
         # Connect to given host/port
-        self._dummy = dummy
-        if not dummy:
+        self._simulation = simulation
+        if not simulation:
             self._socket = socket.socket()
             self._socket.connect((host, port))
 
     def execute(self, command_name: str, **kwargs) -> dict:
-        if self._dummy:
-            return { "response": "OK" }
+        if self._simulation:
+            return self.simulation_execute(command_name, **kwargs)
         
         # Load command into JSON format
         command = json.dumps({"command": command_name, "kwargs": {**kwargs}}) + "\n"
@@ -42,5 +42,11 @@ class RemoteInterface:
                 "source": response,
             }
 
+    def simulation_execute(self, command_name: str, **kwargs) -> dict:
+        if command_name == "poll":
+            return {"response": "DATA", "payload": {"position": 0.5}}
+        return {"response": "ERR", "error_message": "Command not recognised"}
+
     def quit(self):
-        self._socket.disconnect()
+        if not self._simulation:
+            self._socket.shutdown()
