@@ -9,8 +9,8 @@ WINDOW_WIDTH = 1024
 WINDOW_HEIGHT = 768
 
 primary_color = "black"
-secondary_color = "lime"
-tertiary_color = "lime"
+secondary_color = "red"
+tertiary_color = "blue"
 
 typeface = "Courier New"
 
@@ -72,7 +72,10 @@ class InfoPair(Frame):
 
     @value.setter
     def value(self, new_value):
-        self.value_label.config(text=str(new_value))
+        val = str(new_value)
+        if type(new_value) is float:
+            val = str(round(new_value, 1))
+        self.value_label.config(text=val)
         self._value = new_value
 
 
@@ -120,7 +123,7 @@ class MonitorDisplay(Frame):
         self.height = 512
         super().__init__(master, width=self.width, height=self.height)
 
-        title = Label(self, text="Visual Monitor", justify='center', style="title.TLabel")
+        title = Label(self, text="Visualizer", justify='center', style="title.TLabel")
         title.pack(side='top', expand=False, fill='y')
 
         self.canvas = Canvas(self, width=self.width, height=self.height, bg=primary_color,
@@ -152,21 +155,19 @@ class HistoryPanel(Frame):
 
         self.listbox = Listbox(self, background=primary_color, bg=primary_color, fg=secondary_color,
                                selectbackground=secondary_color, selectforeground=primary_color, font=(typeface, 10),
-                               highlightbackground=tertiary_color)
+                               highlightbackground=tertiary_color, highlightcolor=tertiary_color)
         self.listbox.configure(width=64)
-
-        example_logs = [
-            "2025-09-19::13:03 - Bridge started closing",
-            "2025-09-19::13:06 - Bridge finished closing",
-            "2025-09-19::13:10 - New vehicle in waterway detected",
-        ]
-
-        self.listbox.insert(END, *example_logs)
 
         self.listbox.pack(side="top")
 
     def update_info(self, info: dict) -> None:
-        pass
+        if "logs" not in info.keys():
+            return
+
+        logs = info["logs"]
+        for log in logs:
+            self.listbox.insert(END, str(log))
+            self.listbox.see(END)
 
 
 class ControlPanel(Frame):
@@ -206,14 +207,14 @@ class OverridePanel(Frame):
         title = Label(self, text="Overrides", justify='center', style="title.TLabel")
 
         check_panel = Frame(self)
-        self.check_panel_status = InfoPair(check_panel, "overrides", "Disabled")
+        self.check_panel_status = InfoPair(check_panel, "system_control", "AUTOMATIC")
         self.enable_override_button = Button(check_panel, text="Enable Overrides")
         self.disable_override_button = Button(check_panel, text="Disable Overrides")
 
         self.control_panel = ControlPanel(self)
 
         for content in [title, self.check_panel_status,self.enable_override_button,
-                        self.disable_override_button, check_panel, self.control_panel]:
+                        self.disable_override_button, check_panel]:
             content.pack(side="top", expand=True, fill='x')
 
 
@@ -269,6 +270,7 @@ class BridgeControllerGUI(Tk):
 
     def _bind_override_panel(self, panel: OverridePanel) -> None:
         cpl = panel.control_panel
+
         binds = {
             cpl.raise_button:   self.raise_bridge,
             cpl.lower_button:   self.lower_bridge,
@@ -276,6 +278,9 @@ class BridgeControllerGUI(Tk):
             cpl.go_button:      self.lights_go,
             cpl.yield_button:   self.lights_yield,
             cpl.stop_button:    self.lights_stop,
+
+            panel.enable_override_button:   self.enable_overrides,
+            panel.disable_override_button:  self.disable_overrides,
         }
 
         for button, method in binds.items():
@@ -288,7 +293,9 @@ class BridgeControllerGUI(Tk):
         self.set_bridge_position(0.0)
 
     def set_bridge_position(self, position: float) -> None:
-        ri.execute("set_bridge_position", position=position)
+        if self.override_panel.check_panel_status.value.upper() == "AUTOMATIC":
+            return
+        self.interface.execute("set_bridge_position", position=position)
 
     def lights_go(self):
         self.set_lights("GO")
@@ -300,7 +307,17 @@ class BridgeControllerGUI(Tk):
         self.set_lights("STOP")
 
     def set_lights(self, code: str):
-        ri.execute("set_lights", code=code)
+        if self.override_panel.check_panel_status.value.upper() == "AUTOMATIC":
+            return
+        self.interface.execute("set_lights", code=code)
+
+    def enable_overrides(self):
+        self.override_panel.check_panel_status.value = "MANUAL"
+        self.override_panel.control_panel.pack(side="top")
+
+    def disable_overrides(self):
+        self.override_panel.check_panel_status.value = "AUTOMATIC"
+        self.override_panel.control_panel.forget()
 
     @property
     def info_subscribers(self) -> list:

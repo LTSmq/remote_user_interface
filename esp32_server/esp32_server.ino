@@ -101,7 +101,7 @@ void handle_command(Command command) {
       Serial.print(" (analog)");
       Serial.println();
 
-    } 
+      } 
     
     else {
       int value = digitalRead(pin);
