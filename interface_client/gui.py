@@ -1,16 +1,17 @@
 from tkinter import *
 from tkinter.ttk import *
+
 from remote_interface import RemoteInterface
+import bridge_drawer
 
-from math import sin
-
-MARGIN = 10
 REFRESH_RATE = 10  # milliseconds
 WINDOW_WIDTH = 1024
 WINDOW_HEIGHT = 768
 
 primary_color = "black"
 secondary_color = "lime"
+tertiary_color = "lime"
+
 typeface = "Courier New"
 
 widget_styles = {
@@ -33,6 +34,14 @@ widget_styles = {
         "foreground": secondary_color,
         "focuscolor": secondary_color,
     },
+    "TButton": {
+        "background": secondary_color,
+        "foreground": primary_color,
+        "focuscolor": tertiary_color,
+        "highlightcolor": primary_color,
+        "bordercolor": primary_color,
+        "font": (typeface, 12),
+    },
 }
 
 class InfoPair(Frame):
@@ -42,8 +51,8 @@ class InfoPair(Frame):
         self.key_label = Label(self, justify="left", style="content.TLabel")
         self.value_label = Label(self, justify="right", style="content.TLabel")
 
-        for label in [self.key_label, self.value_label]:
-            label.pack(side="left", expand=True, fill='x')
+        self.key_label.pack(side="left", expand=False)
+        self.value_label.pack(side="right", expand=False)
 
         self.key = key
         self.value = value
@@ -75,7 +84,7 @@ class Table(Frame):
         for data_title, datum in data.items():
             row = InfoPair(self, data_title, datum)
             self._rows.append(row)
-            row.pack(side="top")
+            row.pack(side="top", expand=True, fill='x')
 
     def update_value(self, key, value):
         for row in self._rows:
@@ -101,7 +110,8 @@ class MonitorPanel(Frame):
         self.table.pack(side="top")
 
     def update_info(self, info: dict) -> None:
-        pass
+        for key, value in info.items():
+            self.table.update_value(key, value)
 
 
 class MonitorDisplay(Frame):
@@ -114,38 +124,23 @@ class MonitorDisplay(Frame):
         title.pack(side='top', expand=False, fill='y')
 
         self.canvas = Canvas(self, width=self.width, height=self.height, bg=primary_color,
-                             highlightcolor=secondary_color, highlightbackground=secondary_color)
+                            highlightbackground=secondary_color)
         self.canvas.pack(side='top', expand=True)
 
         self.update_info({"position": 0.0})
 
     def update_info(self, info: dict) -> None:
-        self.canvas.delete("all")
-
-        scale = 0.9
-        thickness = 5
-        abutment_size = 0.7
-        altitude_domain = 0.7
         position = 0.0
-
         if "position" in info.keys():
             try:
                 position = float(info["position"])
             except ValueError:
                 pass
 
-        for direction in [1, -1]:
-            x = int(direction * scale * self.width * abutment_size / 2) + self.width / 2.0
-            y1 = int((1.0 - scale) * self.height)
-            y2 = int(scale * self.height)
-            self.canvas.create_line(x,y1,x,y2, width=thickness, fill=secondary_color)
-        y = self.height / 2.0
-        y += (self.height * 0.5 * altitude_domain) * (1.0 - (2.0 * position))
-        y = int(y)
-        x1 = int((1.0 - scale) * self.width)
-        x2 = int(scale * self.width)
+        bridge_drawer.primary_color = primary_color
+        bridge_drawer.secondary_color = tertiary_color
 
-        self.canvas.create_line(x1,y,x2,y, width=thickness, fill=secondary_color)
+        bridge_drawer.draw_bridge(self.canvas, position)
 
 
 class HistoryPanel(Frame):
@@ -155,10 +150,10 @@ class HistoryPanel(Frame):
         title = Label(self, text="History", justify='center', style="title.TLabel")
         title.pack(side='top')
 
-        self.listbox = Listbox(self, background=primary_color, borderwidth=0, bg=primary_color, fg=secondary_color,
+        self.listbox = Listbox(self, background=primary_color, bg=primary_color, fg=secondary_color,
                                selectbackground=secondary_color, selectforeground=primary_color, font=(typeface, 10),
-                               highlightbackground=secondary_color)
-        self.listbox.configure(width=96)
+                               highlightbackground=tertiary_color)
+        self.listbox.configure(width=64)
 
         example_logs = [
             "2025-09-19::13:03 - Bridge started closing",
@@ -174,19 +169,52 @@ class HistoryPanel(Frame):
         pass
 
 
+class ControlPanel(Frame):
+    def __init__(self, master: Misc):
+        super().__init__(master)
+
+        animation_button_container = Frame(self)
+        animation_title = Label(animation_button_container, text="Bridge Animation", style="content.TLabel")
+
+        self.raise_button = Button(animation_button_container, text="Raise Bridge")
+        self.lower_button = Button(animation_button_container, text="Lower Bridge")
+
+        animation_title.pack(side="top")
+
+        for button in [self.raise_button, self.lower_button]:
+            button.pack(side="left", expand=True, fill="y")
+
+        lights_button_container = Frame(self)
+
+        self.go_button = Button(lights_button_container, text="GO")
+        self.yield_button = Button(lights_button_container, text="YIELD")
+        self.stop_button = Button(lights_button_container, text="STOP")
+
+        lights_title = Label(lights_button_container, text="Traffic Light Control", style="content.TLabel")
+
+        for button in [lights_title, self.go_button, self.yield_button, self.stop_button]:
+            button.pack(side="top", expand=True, fill="x")
+
+        for container in [animation_button_container, lights_button_container]:
+            container.pack(side="top", expand=True, fill='x')
+
+
 class OverridePanel(Frame):
     def __init__(self, master: Misc):
         super().__init__(master)
 
         title = Label(self, text="Overrides", justify='center', style="title.TLabel")
-        title.pack(side='top')
 
-        self._override_enabled = False
-        self.checkbox = Checkbutton(self, style="TCheckbutton", state="OFF")
-        self.checkbox.pack(side="top")
+        check_panel = Frame(self)
+        self.check_panel_status = InfoPair(check_panel, "overrides", "Disabled")
+        self.enable_override_button = Button(check_panel, text="Enable Overrides")
+        self.disable_override_button = Button(check_panel, text="Disable Overrides")
 
-    def set_bridge_position(self, position: float) -> None:
-        pass
+        self.control_panel = ControlPanel(self)
+
+        for content in [title, self.check_panel_status,self.enable_override_button,
+                        self.disable_override_button, check_panel, self.control_panel]:
+            content.pack(side="top", expand=True, fill='x')
 
 
 class BridgeControllerGUI(Tk):
@@ -197,6 +225,7 @@ class BridgeControllerGUI(Tk):
         self.interface = interface
 
         style = Style()
+        style.theme_use("clam")
         for style_name, kwargs in widget_styles.items():
             style.configure(style_name, **kwargs)
 
@@ -232,10 +261,46 @@ class BridgeControllerGUI(Tk):
         self.history_panel.grid(row=1, sticky='nsew')
 
         self.override_panel = OverridePanel(columns["overrides"])
+        self._bind_override_panel(self.override_panel)
         self.override_panel.grid(sticky="nsew")
 
         for column in columns.values():
             column.pack(side="left", expand=True, fill="y")
+
+    def _bind_override_panel(self, panel: OverridePanel) -> None:
+        cpl = panel.control_panel
+        binds = {
+            cpl.raise_button:   self.raise_bridge,
+            cpl.lower_button:   self.lower_bridge,
+
+            cpl.go_button:      self.lights_go,
+            cpl.yield_button:   self.lights_yield,
+            cpl.stop_button:    self.lights_stop,
+        }
+
+        for button, method in binds.items():
+            button.configure(command=method)
+
+    def raise_bridge(self) -> None:
+        self.set_bridge_position(1.0)
+
+    def lower_bridge(self) -> None:
+        self.set_bridge_position(0.0)
+
+    def set_bridge_position(self, position: float) -> None:
+        ri.execute("set_bridge_position", position=position)
+
+    def lights_go(self):
+        self.set_lights("GO")
+
+    def lights_yield(self):
+        self.set_lights("YIELD")
+
+    def lights_stop(self):
+        self.set_lights("STOP")
+
+    def set_lights(self, code: str):
+        ri.execute("set_lights", code=code)
 
     @property
     def info_subscribers(self) -> list:

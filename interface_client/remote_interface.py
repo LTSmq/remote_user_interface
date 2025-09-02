@@ -41,10 +41,22 @@ class RemoteInterface:
                 "error_message": "Unable to decode server response in JSON format",
                 "source": response,
             }
-
+    
     def simulation_execute(self, command_name: str, **kwargs) -> dict:
         if command_name == "poll":
-            return {"response": "DATA", "payload": {"position": 0.5}}
+            return {"response": "DATA", "payload": {
+                "status": "IDLE",
+                "position": 0.0,
+                "lights": "GO",
+                "logs": {
+                    "2025-09-19::13:16": "Lights set to YIELD",
+                    "2025-09-19::13:17": "Lights set to STOP",
+                }
+            }}
+
+        if command_name == "ping":
+            return {"response": "OK"}
+
         return {"response": "ERR", "error_message": "Command not recognised"}
 
     def quit(self):
