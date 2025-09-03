@@ -1,16 +1,19 @@
+from datetime import datetime
+
 from tkinter import *
 from tkinter.ttk import *
 
-from remote_interface import RemoteInterface
+from remote_interface import RemoteInterfaceHeader, RemoteInterface
+from simulation import SimulatedInterface
 import bridge_drawer
 
-REFRESH_RATE = 10  # milliseconds
+SYNC_TIME = 50  # milliseconds
 WINDOW_WIDTH = 1024
 WINDOW_HEIGHT = 768
 
 primary_color = "black"
-secondary_color = "red"
-tertiary_color = "blue"
+secondary_color = "lime"
+tertiary_color = "lime"
 
 typeface = "Courier New"
 
@@ -43,6 +46,10 @@ widget_styles = {
         "font": (typeface, 12),
     },
 }
+
+
+def now() -> str:
+    return datetime.now().strftime("%H:%M:%S.%f")
 
 class InfoPair(Frame):
     def __init__(self, master: Misc, key, value):
@@ -138,8 +145,9 @@ class MonitorDisplay(Frame):
             try:
                 position = float(info["position"])
             except ValueError:
-                pass
-
+                return
+        else:
+            return
         bridge_drawer.primary_color = primary_color
         bridge_drawer.secondary_color = tertiary_color
 
@@ -161,13 +169,13 @@ class HistoryPanel(Frame):
         self.listbox.pack(side="top")
 
     def update_info(self, info: dict) -> None:
-        if "logs" not in info.keys():
+        if "event" not in info.keys():
             return
 
-        logs = info["logs"]
-        for log in logs:
-            self.listbox.insert(END, str(log))
-            self.listbox.see(END)
+        event = info["event"]
+
+        self.listbox.insert(END,f"{now()} - {str(event)}")
+        self.listbox.see(END)
 
 
 class ControlPanel(Frame):
@@ -219,11 +227,12 @@ class OverridePanel(Frame):
 
 
 class BridgeControllerGUI(Tk):
-    def __init__(self, interface: RemoteInterface, title: str = "Bridge Controller GUI",
+    def __init__(self, interface: RemoteInterfaceHeader, title: str = "Bridge Controller GUI",
                  icon_path: str = ""):
         super().__init__()
 
         self.interface = interface
+        self.interface.update_receiver = self._update_info
 
         style = Style()
         style.theme_use("clam")
@@ -237,7 +246,12 @@ class BridgeControllerGUI(Tk):
             self.iconbitmap(icon_path)
 
         self._build()
+        self._update_info({"position": 0.0})
         self._refresh()
+
+    def _update_info(self, information: dict) -> None:
+        for subscriber in self.info_subscribers:
+            subscriber.update_info(information)
 
     def _build(self) -> None:
         column_names = ["monitor", "multi_display", "overrides"]
@@ -309,33 +323,41 @@ class BridgeControllerGUI(Tk):
     def set_lights(self, code: str):
         if self.override_panel.check_panel_status.value.upper() == "AUTOMATIC":
             return
-        self.interface.execute("set_lights", code=code)
+        self.interface.execute("set_light_condition", light_condition=code)
 
     def enable_overrides(self):
+        self.interface.execute("set_overrides", enabled=True)
+
         self.override_panel.check_panel_status.value = "MANUAL"
         self.override_panel.control_panel.pack(side="top")
 
     def disable_overrides(self):
+        self.interface.execute("set_overrides", enabled=False)
         self.override_panel.check_panel_status.value = "AUTOMATIC"
         self.override_panel.control_panel.forget()
+
+    def sync_bridge_state(self):
+        position_info = self.interface.execute("get_bridge_position")
+
+        self._update_info(position_info["payload"])
+
+    def sync_lights_condition(self):
+        lights_info = self.interface.execute("get_light_condition")
+
+        self._update_info(lights_info["payload"])
 
     @property
     def info_subscribers(self) -> list:
         return [self.monitor_panel, self.visual_monitor, self.history_panel]
 
     def _refresh(self) -> None:
-        response = self.interface.execute("poll")
-
-        info = response.get("payload", {})
-
-        for subscriber in self.info_subscribers:
-            subscriber.update_info(info)
-
-        self.after(REFRESH_RATE, self._refresh)
-
+        self.sync_bridge_state()
+        self.sync_lights_condition()
+        self.after(SYNC_TIME , self._refresh)
 
 if __name__ == "__main__":
-    ri = RemoteInterface(simulation=True)
+    ri: RemoteInterfaceHeader
+    ri = SimulatedInterface()
 
     gui = BridgeControllerGUI(ri, icon_path="graphics/icon.ico")
 

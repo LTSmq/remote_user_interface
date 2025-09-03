@@ -1,119 +1,123 @@
 # remote_interface.py
 import socket
 import json
-import time
-from datetime import datetime
+import threading
+from json import JSONDecodeError
+from typing import Callable, Any
 
 BUFFER_SIZE = 4096
+COMMANDER_PORT = 55555
+UPDATER_PORT = 55055
+
+UpdateReceiver: type = Callable[[dict], Any]
+
+error_code = {
+    "DEBUG": -2,
+    "UNSPECIFIED": -1,
+    "UNRECOGNISED": 0,
+    "INVALID_ARGS": 1,
+    "NOT_FOUND": 2,
+    "PERMISSION_DENIED": 3,
+    "TIMEOUT": 4,
+    "INTERNAL_ERROR": 5,
+    "BAD_JSON": 6,
+}
 
 
-def now() -> str:
-    return datetime.now().strftime("%Y-%m-%d::%H:%M:%S.%f")
-
-
-class RemoteInterface:
-    def __init__(self, host: str = "192.168.4.1", port: int = 55555, simulation: bool = False):
-        # Connect to given host/port
-        self._simulation= simulation
-        if simulation:
-            self.bridge_position = 0.0
-            self.bridge_target_position = self.bridge_position
-            self.bridge_motion_speed = 0.000001  # Per milisecond
-
-            self.logs = [now() + " - Connection Established"]
-
-        else:
-            self._socket = socket.socket()
-            self._socket.connect((host, port))
-
+class RemoteInterfaceHeader:
+    def __init__(self, update_receiver: UpdateReceiver = None):
+        self.update_receiver = update_receiver
+        self._receiving_updates = False
 
     def execute(self, command_name: str, **kwargs) -> dict:
-        if self._simulation:
-            return self.simulation_execute(command_name, **kwargs)
-        
+        raise NotImplementedError("Execution method not defined")
+
+    @property
+    def receiving_updates(self) -> bool:
+        return self._receiving_updates
+
+    @receiving_updates.setter
+    def receiving_updates(self, value: bool) -> None:
+        self._receiving_updates = value
+
+    @property
+    def update_receiver(self) -> UpdateReceiver:
+        return self._update_receiver
+
+    @update_receiver.setter
+    def update_receiver(self, value: UpdateReceiver):
+        self._update_receiver = value
+
+    def quit(self) -> None:
+        raise NotImplementedError("Quit method not defined")
+
+    def _send_update(self, information: dict) -> bool:
+        if self.update_receiver is None:
+            return False
+
+        self.update_receiver(information)
+
+        return True
+
+
+class RemoteInterface(RemoteInterfaceHeader):
+    def __init__(self, host: str = "192.168.4.1", update_receiver: UpdateReceiver = None):
+        super().__init__(update_receiver)
+
+        self._commander_socket = socket.socket()
+        self._commander_socket.connect((host, COMMANDER_PORT))
+
+        self._updater_socket = socket.socket()
+        self._updater_socket.connect((host, UPDATER_PORT))
+
+        self.receiving_updates = True
+
+    def __del__(self) -> None:
+        self._receiving_updates = False
+        self._updater_socket.close()
+        self._commander_socket.close()
+
+    def execute(self, command_name: str, **kwargs) -> dict:
         # Load command into JSON format
         command = json.dumps({"command": command_name, "kwargs": {**kwargs}}) + "\n"
 
         # Dispatch command to server
-        self._socket.send(command.encode())
+        self._commander_socket.send(command.encode())
 
         # Await response
-        response = self._socket.recv(BUFFER_SIZE)
+        response = self._commander_socket.recv(BUFFER_SIZE)
 
         #Ensure response is valid dictionary JSON
         try:
             json_response = json.loads(response)
             if "response" not in json_response.keys():
-                json_response["response"] = "ERR"
-                json_response["error_message"] = ("Response type not provided by server; "
-                                                  "defaulted to error")
+                json_response["response"] = "VOID"
             return json_response
 
         except json.JSONDecodeError:
             return {
                 "response": "ERR",
-                "error_message": "Unable to decode server response in JSON format",
+                "error_code": error_code["BAD_JSON"],
                 "source": response,
             }
 
-    def simulated_status(self) -> str:
-        if self.bridge_position == 0.0:
-            return "IDLE"
-        elif self.bridge_position == 1.0:
-            return "RAISED"
-        else:
-            return "ACTIVE"
+    @RemoteInterfaceHeader.receiving_updates.setter
+    def receiving_updates(self, value: bool) -> None:
+        if value == self._receiving_updates:
+            return
 
-    def simulated_lights(self) -> str:
-        if self.bridge_position==0.0 and self.bridge_target_position != 0.0:
-            return "YIELD"
-        elif self.bridge_position==0.0:
-            return "GO"
-        else:
-            return "STOP"
-    
-    def simulation_execute(self, command_name: str, **kwargs) -> dict:
-        if command_name == "poll":
-            distance_covered = time.perf_counter() * self.bridge_motion_speed
-            difference = self.bridge_target_position - self.bridge_position
-            direction = 0
-            if difference > 0.0:
-                direction = 1
-            elif difference < 0.0:
-                direction = -1
+        self._receiving_updates = value
+        if self._receiving_updates:
+            updater_thread = threading.Thread(target=self._update_worker)
+            updater_thread.start()
 
-            original_target_position = self.bridge_target_position
+    def _update_worker(self) -> None:
+        while self._receiving_updates:
+            response = self._updater_socket.recv(BUFFER_SIZE)
 
-            self.bridge_position += distance_covered * direction
-            if self.bridge_position < 0.0:
-                self.bridge_position = 0.0
-            elif self.bridge_position > 1.0:
-                self.bridge_position = 1.0
+            try:
+                json_response = json.loads(response)
+            except JSONDecodeError:
+                continue
 
-            if self.bridge_position != original_target_position:
-                if self.bridge_position == self.bridge_target_position:
-                    self.logs.append(f"{now()} - Bridge target position reached")
-
-            dump_logs = self.logs.copy()
-            self.logs = []
-
-            return {"response": "DATA", "payload": {
-                "status": self.simulated_status(),
-                "position": self.bridge_position,
-                "lights": self.simulated_lights(),
-                "logs": dump_logs,
-            }}
-
-        if command_name == "ping":
-            return {"response": "OK"}
-
-        if command_name == "set_bridge_position":
-            self.bridge_target_position = kwargs["position"]
-            self.logs.append(f"{now()} - Bridge target position set to {self.bridge_target_position}")
-            return {"response": "OK"}
-
-        return {"response": "ERR", "error_message": "Command not recognised"}
-
-    def quit(self):
-        if not self._simulation:
-            self._socket.shutdown()
+            self._send_update(json_response)
