@@ -171,6 +171,12 @@
       bool connected(ConnectionType);  // Returns true if the given connection type is connected, false otherwise
 
       bool update(DataPackage information);  // For the controller logic to push information back to the remote interface
+      template<typename Type>
+      bool update(const char* label, Type value) {
+        DataPackage data_package;
+        data_package.add_value(label, value);
+        update(data_package);
+      }
 
       void commander();  // To be called in a task
 
