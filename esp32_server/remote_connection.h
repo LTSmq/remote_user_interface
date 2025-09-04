@@ -10,11 +10,11 @@
   #include <ArduinoJson.h>  // By Beniot Blanchon; Install via library manager in Arduino IDE
 
   #define MESSAGE_DELIMITER '\n'
-  #define JSON_CAPACITY 4096
+  #define JSON_CAPACITY 256
 
   #define COMMAND_MONITOR_REFRESH_TIME 50 / portTICK_PERIOD_MS
-  #define COMMAND_MONITOR_STACK_ALLOCATION 1000
-  #define COMMAND_MONITOR_CORE 1
+  #define COMMAND_MONITOR_STACK_ALLOCATION 8192
+  #define COMMAND_MONITOR_CORE 0
 
   #define COMMANDER_PORT 55555
   #define UPDATER_PORT 55055
@@ -39,17 +39,20 @@
   // To pack arbitrary information in a key-value format
   class DataPackage {
     public:
+      JsonObject json_object;
       DataPackage();  // Creates an empty package
       DataPackage(const char* json_string);  // Populates package with JSON data
       DataPackage(JsonObject);
 
       DataPackage get_package(const char* label);
-      const char* as_json();
+      void add_package(const char* label, DataPackage nested);
+      bool add_json(const char* label, const char* json_string);
+      String as_json();
 
       void delete_value(const char* label) {
         json_object.remove(label);
       };
-
+ 
       template <typename Type>
       void add_value(const char* label, Type value) {
         json_object[label] = value;
@@ -57,10 +60,6 @@
 
       bool has_package(const char* label) {
         return json_object[label].is<JsonObject>();
-      }
-
-      void add_package(const char* label, DataPackage nested) {
-        json_object[label] = nested.json_object;
       }
 
       template <typename Type>
@@ -76,7 +75,6 @@
       };
 
     protected:
-      JsonObject json_object;
       StaticJsonDocument<JSON_CAPACITY> json_document;
       char json_string_buffer[JSON_CAPACITY];
   };
@@ -85,6 +83,7 @@
   class Command {
     public:
       Command(const char* json_string);  // Create a command with a JSON string
+      Command() {};  // Dummy placeholder command
 
       const char* name() {
         return _name.c_str();
@@ -100,49 +99,51 @@
       };
 
       template <typename Type>
-      bool get_argument(const char* argument_name, Type default_value) {
+      Type get_argument(const char* argument_name, Type default_value) {
         return arguments.get_value<Type>(argument_name, default_value);
       };
     
     protected:
-      String _name;
+      String _name = "";
       DataPackage arguments;
-      unsigned short _ticket;
-
+      unsigned short _ticket = 0;
   };
 
   // For the control system to respond to commands with
   class Response {  // Abstract
     public:
-      const char* as_json();
+      Response(Command);
+      String as_json();
     
     protected:
+      Command command;
       virtual DataPackage format();
   };
 
   // Acknowledgement that command was received and understood
   class ResponseOK: public Response {  // Positive response
     public:
-      ResponseOK();
+      using Response::Response;
     
     protected:
       DataPackage format() override;
   };
-
+  
   // Acknowledgement that command was received and understood, including information requested by command
   class ResponseDATA: public Response {  // Positive response
     public:
-      ResponseDATA(DataPackage);
+      ResponseDATA(Command, DataPackage);
     
     protected:
       DataPackage format() override;
-      DataPackage payload;
+      String saved_payload;
+
   };
 
   // Acknowledgement command was received but rejected
   class ResponseERR: public Response {  // Negative response
     public:
-      ResponseERR(ErrorCode);
+      ResponseERR(Command, ErrorCode);
     
     protected:
       DataPackage format() override;
@@ -152,7 +153,7 @@
   // Acknowledgement command was received by socket but not acknowledged by control logic; for debug use
   class ResponseVOID: public Response {  // Negative response
     public:
-      ResponseVOID();
+      using Response::Response;
     
     protected:
       DataPackage format() override;
@@ -161,7 +162,7 @@
 
   class RemoteConnection {
     public:
-      Response (*command_handler)(Command) = nullptr;  // The pointer to the function expected to handle incoming commands and provide response
+      Response* (*command_handler)(Command) = nullptr;  // The pointer to the function expected to handle incoming commands and provide response
 
       RemoteConnection();
       ~RemoteConnection();
@@ -175,16 +176,16 @@
       bool update(const char* label, Type value) {
         DataPackage data_package;
         data_package.add_value(label, value);
-        update(data_package);
+        return update(data_package);
       }
 
       void commander();  // To be called in a task
 
     protected:
-      WiFiServer commander_server = WiFiServer(COMMANDER_PORT, SINGLE_CLIENT_ONLY);
+      WiFiServer commander_server;
       WiFiClient commander_client;
 
-      WiFiServer updater_server = WiFiServer(UPDATER_PORT, SINGLE_CLIENT_ONLY);
+      WiFiServer updater_server;
       WiFiClient updater_client;
 
       
