@@ -361,7 +361,7 @@ if __name__ == "__main__":
 
     gui = BridgeControllerGUI(ri, icon_path="graphics/icon.ico")
 
-    gui.minsize(1024, 786)
+    gui.minsize(WINDOW_WIDTH, WINDOW_HEIGHT)
 
     gui.mainloop()
 
