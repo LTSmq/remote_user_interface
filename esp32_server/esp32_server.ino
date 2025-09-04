@@ -57,7 +57,7 @@ Response* handle_command(Command command) {
   }
 
   if (response == nullptr) {
-    ResponseERR(command, UNRECOGNISED);
+    response = new ResponseERR(command, UNRECOGNISED);
   }
 
   Serial.print("Responding with: ");
