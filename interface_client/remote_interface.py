@@ -100,7 +100,6 @@ class RemoteInterface(RemoteInterfaceHeader):
                 "error_code": error_code["BAD_JSON"],
                 "source": response,
             }
-
     @RemoteInterfaceHeader.receiving_updates.setter
     def receiving_updates(self, value: bool) -> None:
         if value == self._receiving_updates:
