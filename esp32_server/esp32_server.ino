@@ -56,7 +56,12 @@ Response* handle_command(Command command) {
     }
   }
 
-  if (response == nullptr) {
+  else if (command_name.equals("raise_error")) {
+    ErrorCode code = command.get_argument("code", DEBUG);
+    response = new ResponseERR(command, code);
+  } 
+
+  else {
     response = new ResponseERR(command, UNRECOGNISED);
   }
 
