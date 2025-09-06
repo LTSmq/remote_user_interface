@@ -8,28 +8,43 @@
 #define SSID "Bridge Controller 26"
 #define PASSWORD "iheartjokes"
 
-#define HEARTBEAT_TIME 5000
+#define BUTTON_REFRESH_TIME 50
+
+#define LED_PIN 5
+#define BUTTON_PIN 33
 
 RemoteConnection rc;
+unsigned char last_read_button_push;
 
 
 void setup() {
   Serial.begin(115200);
   rc.command_handler = &handle_command;
   rc.open(SSID, PASSWORD);
+
+  pinMode(LED_PIN, OUTPUT);
+  pinMode(BUTTON_PIN, INPUT);
+  last_read_button_push = digitalRead(BUTTON_PIN);
 }
 
 
 void loop() {
-  delay(HEARTBEAT_TIME);
-  Serial.print("Heartbeat: ");
-  if (rc.update("sync", true)) {
-    Serial.print("Updates connected to client");
+  unsigned char button_push = digitalRead(BUTTON_PIN);
+
+  if (button_push != last_read_button_push) {
+    last_read_button_push = button_push;
+    bool is_pushed = button_push == HIGH ? true : false;
+    rc.update("button_pushed", is_pushed);
+
+    if (is_pushed) {
+      Serial.println("Button pressed");
+    } 
+
+    else {
+      Serial.println("Button released");
+    }
   }
-  else {
-    Serial.print("No client to receive updates");
-  }
-  Serial.println();
+  delay(BUTTON_REFRESH_TIME);
 }
 
 
@@ -60,6 +75,18 @@ Response* handle_command(Command command) {
     ErrorCode code = command.get_argument("code", DEBUG);
     response = new ResponseERR(command, code);
   } 
+
+  else if (command_name.equals("set_light")) {
+    if (!command.has_argument<unsigned char>("to")) {
+      response = new ResponseERR(command, INVALID_ARGS);
+    }
+    else {
+      unsigned char to = command.get_argument("to", LOW);
+
+      digitalWrite(LED_PIN, to);
+      response = new ResponseOK(command);
+    }
+  }
 
   else {
     response = new ResponseERR(command, UNRECOGNISED);
