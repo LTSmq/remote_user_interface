@@ -6,16 +6,23 @@ from shlex import split as tokenize
 from tkinter import Tk, Listbox, END
 from threading import Thread
 
-from interface_client.remote_interface import error_code
+from datetime import datetime
+
+from remote_interface import error_code
 from remote_interface import RemoteInterface
 
 UPDATE_WINDOW_SIZE = 786, 786
+
+
+def now() -> str:
+    return datetime.now().strftime("%H:%M:%S.%f")
+
 
 class UpdateWindow(Tk):
     def __init__(self):
         super().__init__()
         self.title("Bridge Updates")
-        self.iconbitmap("graphics/icon.ico")
+        
         self.minsize(*UPDATE_WINDOW_SIZE)
 
         self.listbox = Listbox(highlightcolor="white", background="black", foreground="white",
@@ -23,7 +30,9 @@ class UpdateWindow(Tk):
         self.listbox.pack(expand=True, fill="both")
 
     def display_update(self, information: dict):
-        self.listbox.insert(END, str(information))
+        current_time = now()
+        for label, datum in information.items():
+            self.listbox.insert(END, f"({current_time})\t{label}: \t{datum}")
         self.listbox.see(END)
 
 
@@ -97,22 +106,46 @@ def print_payload(payload: dict):
 
 
 if __name__ == "__main__":
-    ri = RemoteInterface()
-    uw = UpdateWindow()
+    try:
+        ri = RemoteInterface()
 
-    ri.update_receiver = uw.display_update
+        windows: list[Tk] = []
+        def update(information: dict) -> None:
+            for window in windows:
+                window.display_update(information)
+        
+        ri.update_receiver = update
 
-    inputting = True
-    def input_thread():
+        inputting = True
+        show_json = False
         while inputting:
             user_input = input("> ")
             command_name, kwargs = parse_input(user_input)
 
             if command_name.lower() in ["quit", "exit", "logout"]:
+                inputting = False
                 break
+            
+            if command_name.lower() == "updates":  # This is currently broken
+                uw = UpdateWindow()
+                windows.append(uw)
+                Thread(target=uw.mainloop)
+
+                continue
+            
+            if command_name.lower() == "show_json":
+                show_json = True
+                continue
+            
+            if command_name.lower() == "hide_json":
+                show_json = False
+                continue
 
             response = ri.execute(command_name.lower(), **kwargs)
-            print(str(response))
+            
+            if show_json:
+                print(str(response))
+            
             if not "response" in response.keys():
                 continue
             response_type = response["response"]
@@ -127,10 +160,11 @@ if __name__ == "__main__":
 
             elif response_type == "DATA":
                 print_payload(response["payload"])
-        uw.destroy()
 
-    Thread(target=input_thread).start()
-    uw.mainloop()
-    inputting = False
-    ri.quit()
-
+        for window in windows:
+            window.destroy()
+        
+        ri.quit()
+    except ConnectionError:
+        print("ERROR: Connection failed")
+        input("Press enter to quit")
