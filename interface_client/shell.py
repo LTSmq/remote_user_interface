@@ -3,37 +3,13 @@
 # Users provide a method name and keyword arguments in Python syntax
 
 from shlex import split as tokenize
-from tkinter import Tk, Listbox, END
-from threading import Thread
 
 from datetime import datetime
 
 from remote_interface import error_code
 from remote_interface import RemoteInterface
 
-UPDATE_WINDOW_SIZE = 786, 786
 
-
-def now() -> str:
-    return datetime.now().strftime("%H:%M:%S.%f")
-
-
-class UpdateWindow(Tk):
-    def __init__(self):
-        super().__init__()
-        self.title("Bridge Updates")
-        
-        self.minsize(*UPDATE_WINDOW_SIZE)
-
-        self.listbox = Listbox(highlightcolor="white", background="black", foreground="white",
-                               font=("Consolas", 16))
-        self.listbox.pack(expand=True, fill="both")
-
-    def display_update(self, information: dict):
-        current_time = now()
-        for label, datum in information.items():
-            self.listbox.insert(END, f"({current_time})\t{label}: \t{datum}")
-        self.listbox.see(END)
 
 
 def parse_input(user_input: str):
@@ -109,13 +85,6 @@ if __name__ == "__main__":
     try:
         ri = RemoteInterface()
 
-        windows: list[Tk] = []
-        def update(information: dict) -> None:
-            for window in windows:
-                window.display_update(information)
-        
-        ri.update_receiver = update
-
         inputting = True
         show_json = False
         while inputting:
@@ -125,13 +94,6 @@ if __name__ == "__main__":
             if command_name.lower() in ["quit", "exit", "logout"]:
                 inputting = False
                 break
-            
-            if command_name.lower() == "updates":  # This is currently broken
-                uw = UpdateWindow()
-                windows.append(uw)
-                Thread(target=uw.mainloop)
-
-                continue
             
             if command_name.lower() == "show_json":
                 show_json = True
@@ -160,9 +122,6 @@ if __name__ == "__main__":
 
             elif response_type == "DATA":
                 print_payload(response["payload"])
-
-        for window in windows:
-            window.destroy()
         
         ri.quit()
     except ConnectionError:
