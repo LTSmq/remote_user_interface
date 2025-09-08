@@ -70,6 +70,7 @@ class RemoteInterface(RemoteInterfaceHeader):
         self._updater_socket = socket.socket()
         self._updater_socket.connect((host, UPDATER_PORT))
 
+        self.updater_thread: threading.Thread
         self.receiving_updates = True
 
     def __del__(self) -> None:
@@ -104,6 +105,7 @@ class RemoteInterface(RemoteInterfaceHeader):
     def quit(self):
         for socket in [self._commander_socket, self._updater_socket]:
             socket.close()
+        self.receiving_updates = False
 
     @RemoteInterfaceHeader.receiving_updates.setter
     def receiving_updates(self, value: bool) -> None:
@@ -112,8 +114,10 @@ class RemoteInterface(RemoteInterfaceHeader):
 
         self._receiving_updates = value
         if self._receiving_updates:
-            updater_thread = threading.Thread(target=self._update_worker)
-            updater_thread.start()
+            self.updater_thread = threading.Thread(target=self._update_worker)
+            self.updater_thread.start()
+        else:
+            self.updater_thread.join()
 
     def _update_worker(self) -> None:
         while self._receiving_updates:
@@ -121,7 +125,6 @@ class RemoteInterface(RemoteInterfaceHeader):
 
             try:
                 json_response = json.loads(response)
+                self._send_update(json_response)
             except JSONDecodeError:
                 continue
-
-            self._send_update(json_response)
