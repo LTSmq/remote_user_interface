@@ -31,11 +31,6 @@
     INTERNAL_ERROR,
   };
 
-  enum ConnectionType {
-    COMMANDER,
-    UPDATER,
-  };
-
   // To pack arbitrary information in a key-value format
   class DataPackage {
     public:
@@ -169,7 +164,7 @@
 
       void open(const char* ssid, const char* password);  // Opens the connection
       void close();  // Closes the connection
-      bool connected(ConnectionType);  // Returns true if the given connection type is connected, false otherwise
+      bool connected();  // Returns true if the given connection type is connected, false otherwise
 
       bool update(DataPackage information);  // For the controller logic to push information back to the remote interface
       template<typename Type>
