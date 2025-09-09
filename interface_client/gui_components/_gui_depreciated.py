@@ -4,7 +4,8 @@ from tkinter import *
 from tkinter.ttk import *
 
 from remote_interface import RemoteInterfaceHeader, RemoteInterface
-from interface_client.gui_components import bridge_display
+from simulation import SimulatedInterface
+import bridge_display
 
 SYNC_TIME = 50  # milliseconds
 WINDOW_WIDTH = 1024
@@ -47,7 +48,8 @@ widget_styles = {
 }
 
 
-
+def now() -> str:
+    return datetime.now().strftime("%H:%M:%S.%f")
 
 class InfoPair(Frame):
     def __init__(self, master: Misc, key, value):

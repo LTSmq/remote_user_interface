@@ -19,7 +19,7 @@ def receive(information: dict) -> None:
             gpio_value = 1 if switch_on else 0
             ri.execute("set_light", to=gpio_value)
 
-    print(f"({now})")
+    print(f"({now()})")
     print_payload(information)
 
 
