@@ -13,8 +13,11 @@
 #define LED_PIN 5
 #define SWITCH_PIN 23
 
+#define SWITCH_LABEL "bridge_position"
+
 RemoteConnection rc;
 unsigned char last_read_input;
+bool overrides_enabled = false;
 
 
 void setup() {
@@ -34,7 +37,7 @@ void loop() {
   if (switch_down != last_read_input) {
     last_read_input = switch_down;
     bool is_on = switch_down == LOW ;
-    rc.update("switch_on", is_on);
+    rc.update("current_position", switch_down);
 
     if (is_on) {
       Serial.println("Switch on");
@@ -57,7 +60,7 @@ Response* handle_command(Command command) {
   Serial.println();
 
   if (command_name.equals("ping")) {
-    response = new ResponseOK(command);  // Seems to construct using base abstract constructor
+    response = new ResponseOK(command);
   }
 
   else if (command_name.equals("echo")) {
@@ -65,7 +68,9 @@ Response* handle_command(Command command) {
       response = new ResponseERR(command, INVALID_ARGS);
     } else {
       DataPackage package;
+
       package.add_value<const char*>("message", command.get_argument<const char*>("message", ""));
+
       response = new ResponseDATA(command, package);
     }
   }
@@ -75,15 +80,16 @@ Response* handle_command(Command command) {
     response = new ResponseERR(command, code);
   }
 
-  else if (command_name.equals("set_light")) {
-    if (!command.has_argument<unsigned char>("to")) {
-      response = new ResponseERR(command, INVALID_ARGS);
-    } else {
-      unsigned char to = command.get_argument("to", LOW);
-
-      digitalWrite(LED_PIN, to);
-      response = new ResponseOK(command);
-    }
+  else if (command_name.equals("set_overrides")) {
+      if (!command.has_argument<bool>("to")) {
+        response = new ResponseERR(command, INVALID_ARGS);
+      }
+      else {
+        bool to = command.get_argument("to", false);
+        digitalWrite(LED_PIN, to);
+        response = new ResponseOK(command);
+        overrides_enabled = to;
+      }
   }
 
   else {
