@@ -15,6 +15,12 @@
 
 #define SWITCH_LABEL "bridge_position"
 
+enum OverrideMode {
+  DISABLED,
+  INPUT,
+  OUTPUT,
+}
+
 RemoteConnection rc;
 unsigned char last_read_input;
 bool overrides_enabled = false;
